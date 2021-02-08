@@ -10,15 +10,43 @@ fn main() {
         })
         .collect::<Vec<_>>();
     lines.sort();
+
+    match part_one(&lines) {
+        Ok(m) => println!("✔ Part one: {}", m),
+        Err(msg) => println!("❌ Part one: {}", msg),
+    }
+    match part_two(&lines) {
+        Ok(m) => println!("✔ Part two: {}", m),
+        Err(msg) => println!("❌ Part two: {}", msg),
+    }
+}
+
+fn part_one(lines: &[u32]) -> Result<u32, String> {
     for a in &lines[..lines.len() - 2] {
         for b in &lines[..lines.len() - 1] {
             if a + b == 2020 {
-                println!("{}", a * b);
-                std::process::exit(0);
+                return Ok(a * b);
             } else if a + b > 2020 {
                 break;
             }
         }
     }
-    println!("No result found");
+
+    Err("No result found".to_string())
+}
+
+fn part_two(lines: &[u32]) -> Result<u32, String> {
+    for a in &lines[..lines.len() - 3] {
+        for b in &lines[..lines.len() - 2] {
+            for c in &lines[..lines.len() - 1] {
+                if a + b + c == 2020 {
+                    return Ok(a * b * c);
+                } else if a + b + c > 2020 {
+                    break;
+                }
+            }
+        }
+    }
+
+    Err("No result found".to_string())
 }
