@@ -22,8 +22,8 @@ fn main() {
 }
 
 fn part_one(lines: &[u32]) -> Result<u32, String> {
-    for a in &lines[..lines.len() - 2] {
-        for b in &lines[..lines.len() - 1] {
+    for a in &lines[..lines.len() - 1] {
+        for b in &lines[..lines.len()] {
             if a + b == 2020 {
                 return Ok(a * b);
             } else if a + b > 2020 {
@@ -36,9 +36,9 @@ fn part_one(lines: &[u32]) -> Result<u32, String> {
 }
 
 fn part_two(lines: &[u32]) -> Result<u32, String> {
-    for a in &lines[..lines.len() - 3] {
-        for b in &lines[..lines.len() - 2] {
-            for c in &lines[..lines.len() - 1] {
+    for a in &lines[..lines.len() - 2] {
+        for b in &lines[..lines.len() - 1] {
+            for c in &lines[..lines.len()] {
                 if a + b + c == 2020 {
                     return Ok(a * b * c);
                 } else if a + b + c > 2020 {
