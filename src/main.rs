@@ -5,6 +5,9 @@ use itertools::process_results;
 use lazy_static::lazy_static;
 use regex::Regex;
 
+#[cfg(test)]
+use proptest::prelude::*;
+
 lazy_static! {
     static ref PW_LINE: Regex =
         Regex::new(r"^(?P<num1>\w+)-(?P<num2>\d+) (?P<char>[a-z]): (?P<pw>\w+)$").unwrap();
@@ -101,5 +104,13 @@ mod tests {
         assert!(is_valid_pw_part2("1-3 a: abcde").unwrap());
         assert!(!is_valid_pw_part2("1-3 b: cdefg").unwrap());
         assert!(!is_valid_pw_part2("2-9 c: ccccccccc").unwrap());
+    }
+
+    proptest! {
+        #[test]
+        fn doesnt_crash(s in r"\PC*") {
+            is_valid_pw_part1(&s).ok();
+            is_valid_pw_part2(&s).ok();
+        }
     }
 }
