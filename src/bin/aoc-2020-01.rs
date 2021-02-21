@@ -9,7 +9,7 @@ fn main() {
                 .unwrap_or_else(|_| panic!("failed to parse {}", &s))
         })
         .collect::<Vec<_>>();
-    lines.sort();
+    lines.sort_unstable();
 
     match part_one(&lines) {
         Ok(m) => println!("✔ Part one: {}", m),
