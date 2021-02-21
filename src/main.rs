@@ -1,6 +1,7 @@
 use std::fs;
 
 use anyhow::{Context, Result};
+use itertools::process_results;
 use lazy_static::lazy_static;
 use regex::Regex;
 
@@ -17,26 +18,23 @@ struct PwInfo {
 }
 
 fn main() -> Result<()> {
-    let input = fs::read_to_string("input/02").expect("Error reading file");
+    let input = fs::read_to_string("input/02").expect("Error reading input file");
 
-    let count1 = get_count(is_valid_pw_part1, &input);
+    let count1 = get_count(is_valid_pw_part1, &input)?;
     println!("Part 1: {}", count1);
 
-    let count2 = get_count(is_valid_pw_part2, &input);
+    let count2 = get_count(is_valid_pw_part2, &input)?;
     println!("Part 2: {}", count2);
 
     Ok(())
 }
 
-fn get_count<F>(f: F, input: &str) -> usize
+fn get_count<F>(f: F, input: &str) -> Result<usize>
 where
     F: Fn(&str) -> Result<bool>,
 {
-    input
-        .lines()
-        .map(|line| f(line).unwrap())
-        .filter(|&b| b)
-        .count()
+    let valid_results = input.lines().map(|line| f(line));
+    process_results(valid_results, |iter| iter.filter(|&b| b).count())
 }
 
 fn parse_line(line: &str) -> Result<PwInfo> {
