@@ -1,7 +1,7 @@
 use std::fs;
 
 fn main() {
-    let input = fs::read_to_string("input".to_string()).expect("Error reading file");
+    let input = fs::read_to_string("input/01".to_string()).expect("Error reading file");
     let mut lines = input
         .lines()
         .map(|s| {
