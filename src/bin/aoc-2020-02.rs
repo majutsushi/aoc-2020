@@ -21,7 +21,7 @@ struct PwInfo {
 }
 
 fn main() -> Result<()> {
-    let input = fs::read_to_string("input/02").expect("Error reading input file");
+    let input = fs::read_to_string("input/02.txt").expect("Error reading input file");
 
     let count1 = get_count(is_valid_pw_part1, &input)?;
     println!("Part 1: {}", count1);

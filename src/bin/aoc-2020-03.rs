@@ -3,7 +3,7 @@ use std::fs;
 use anyhow::{Context, Result};
 
 fn main() -> Result<()> {
-    let input = fs::read_to_string("input/03").context("input file not found")?;
+    let input = fs::read_to_string("input/03.txt").context("input file not found")?;
 
     let map = input
         .lines()
