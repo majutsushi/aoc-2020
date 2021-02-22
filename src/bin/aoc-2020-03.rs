@@ -7,13 +7,7 @@ fn main() -> Result<()> {
 
     let map = input
         .lines()
-        .map(|line| {
-            line.split("")
-                // splitting on every character produces
-                // empty strings at beginning and end
-                .filter(|s| !s.is_empty())
-                .collect::<Vec<_>>()
-        })
+        .map(|line| line.chars().collect::<Vec<_>>())
         .collect::<Vec<_>>();
 
     println!("Part 1: {}", get_tree_count(&map, 3, 1));
@@ -27,11 +21,11 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-fn get_tree_count(map: &[Vec<&str>], step_x: usize, step_y: usize) -> usize {
+fn get_tree_count(map: &[Vec<char>], step_x: usize, step_y: usize) -> usize {
     let width = map[0].len();
     (0..map.len())
         .step_by(step_y)
         .zip((0..).step_by(step_x))
-        .filter(|&(y, x)| map[y][x % width] == "#")
+        .filter(|&(y, x)| map[y][x % width] == '#')
         .count()
 }
