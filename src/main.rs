@@ -16,12 +16,22 @@ fn main() -> Result<()> {
         })
         .collect::<Vec<_>>();
 
-    let width = map[0].len();
-    let count = (0..map.len())
-        .zip((0..).step_by(3))
-        .filter(|&(y, x)| map[y][x % width] == "#")
-        .count();
-    println!("{}", count);
+    println!("Part 1: {}", get_tree_count(&map, 3, 1));
+
+    let part2 = [[1, 1], [3, 1], [5, 1], [7, 1], [1, 2]]
+        .iter()
+        .map(|&[x, y]| get_tree_count(&map, x, y))
+        .product::<usize>();
+    println!("Part 2: {}", part2);
 
     Ok(())
+}
+
+fn get_tree_count(map: &[Vec<&str>], step_x: usize, step_y: usize) -> usize {
+    let width = map[0].len();
+    (0..map.len())
+        .step_by(step_y)
+        .zip((0..).step_by(step_x))
+        .filter(|&(y, x)| map[y][x % width] == "#")
+        .count()
 }
