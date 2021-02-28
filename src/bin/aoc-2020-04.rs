@@ -4,6 +4,15 @@ use std::str::FromStr;
 
 use anyhow::{anyhow, Context, Result};
 use itertools::Itertools;
+use lazy_static::lazy_static;
+use regex::Regex;
+
+lazy_static! {
+    static ref CM_VALUE: Regex = Regex::new(r"^(?P<val>\d+)cm$").unwrap();
+    static ref IN_VALUE: Regex = Regex::new(r"^(?P<val>\d+)in$").unwrap();
+    static ref HCL: Regex = Regex::new(r"^#[0-9a-f]{6}$").unwrap();
+    static ref PID: Regex = Regex::new(r"^[0-9]{9}$").unwrap();
+}
 
 #[derive(Debug, PartialEq)]
 struct Passport {
@@ -31,6 +40,56 @@ impl Passport {
                 cid: _
             }
         )
+    }
+
+    fn is_valid_part2(&self) -> bool {
+        fn fields_valid(p: &Passport) -> Result<bool> {
+            let byr = p.byr.as_ref().unwrap().parse::<u16>()?;
+            if !(1920..=2002).contains(&byr) {
+                return Ok(false);
+            }
+
+            let iyr = p.iyr.as_ref().unwrap().parse::<u16>()?;
+            if !(2010..=2020).contains(&iyr) {
+                return Ok(false);
+            }
+
+            let eyr = p.eyr.as_ref().unwrap().parse::<u16>()?;
+            if !(2020..=2030).contains(&eyr) {
+                return Ok(false);
+            }
+
+            let hgt = p.hgt.as_ref().unwrap();
+            if let Some(captures) = CM_VALUE.captures(hgt) {
+                let val = captures.name("val").unwrap().as_str().parse::<u16>()?;
+                if !(150..=193).contains(&val) {
+                    return Ok(false);
+                }
+            } else if let Some(captures) = IN_VALUE.captures(hgt) {
+                let val = captures.name("val").unwrap().as_str().parse::<u16>()?;
+                if !(59..=76).contains(&val) {
+                    return Ok(false);
+                }
+            } else {
+                return Ok(false);
+            }
+
+            if !HCL.is_match(p.hcl.as_ref().unwrap()) {
+                return Ok(false);
+            }
+
+            match p.ecl.as_ref().unwrap().as_ref() {
+                "amb" | "blu" | "brn" | "gry" | "grn" | "hzl" | "oth" => {}
+                _ => return Ok(false),
+            }
+
+            if !PID.is_match(p.pid.as_ref().unwrap()) {
+                return Ok(false);
+            }
+
+            Ok(true)
+        }
+        self.is_valid() && fields_valid(&self).unwrap_or(false)
     }
 }
 impl FromStr for Passport {
@@ -90,8 +149,15 @@ fn main() -> Result<()> {
         .map(|r| r.as_ref().unwrap().is_valid())
         .filter(|&p| p)
         .count();
+    println!("Part 1: {}", count);
 
-    println!("{}", count);
+    let count2 = data
+        .iter()
+        .filter(|r| r.is_ok())
+        .map(|r| r.as_ref().unwrap().is_valid_part2())
+        .filter(|&p| p)
+        .count();
+    println!("Part 2: {}", count2);
 
     Ok(())
 }
