@@ -1,9 +1,9 @@
-use std::collections::{HashMap, LinkedList};
+use std::collections::HashMap;
 use std::fs;
 use std::str::FromStr;
 
 use anyhow::{anyhow, Context, Result};
-use itertools::Itertools;
+use itertools::{Either, Itertools};
 use lazy_static::lazy_static;
 use regex::Regex;
 
@@ -96,21 +96,30 @@ impl FromStr for Passport {
     type Err = anyhow::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let mut entries = HashMap::new();
-        let mut errors = LinkedList::new();
-        for field in s.split_whitespace() {
-            if let Some((key, val)) = field.splitn(2, ':').collect_tuple() {
-                entries.insert(key.to_string(), val.to_string());
-            } else {
-                errors.push_back(field);
-            }
-        }
+        let (parsed_fields, errors): (Vec<_>, Vec<_>) = s
+            .split_whitespace()
+            .map(|field| {
+                field
+                    .splitn(2, ':')
+                    .map(|p| p.to_owned())
+                    .collect_tuple()
+                    .ok_or(field)
+            })
+            .partition_map(|r| match r {
+                Ok(t) => Either::Left(t),
+                Err(e) => Either::Right(e),
+            });
+
         if !errors.is_empty() {
             return Err(anyhow!(
                 "No colon found in fields: {}",
                 errors.into_iter().join(", ")
             ));
         }
+
+        let mut entries = parsed_fields
+            .into_iter()
+            .collect::<HashMap<String, String>>();
 
         let result = Passport {
             byr: entries.remove("byr"),
@@ -133,28 +142,28 @@ impl FromStr for Passport {
 fn main() -> Result<()> {
     let input = fs::read_to_string("input/04.txt").context("input file not found")?;
 
-    let data = input
+    let (passports, errors): (Vec<_>, Vec<_>) = input
         .split("\n\n")
         .map(|s| s.parse::<Passport>())
-        .collect::<Vec<_>>();
+        .partition_map(|r| match r {
+            Ok(p) => Either::Left(p),
+            Err(e) => Either::Right(e),
+        });
 
-    let errors = data.iter().filter(|r| r.is_err()).collect::<Vec<_>>();
     if !errors.is_empty() {
         println!("Parse errors: {:?}", errors);
     }
 
-    let count = data
+    let count = passports
         .iter()
-        .filter(|r| r.is_ok())
-        .map(|r| r.as_ref().unwrap().is_valid())
+        .map(|p| p.is_valid())
         .filter(|&p| p)
         .count();
     println!("Part 1: {}", count);
 
-    let count2 = data
+    let count2 = passports
         .iter()
-        .filter(|r| r.is_ok())
-        .map(|r| r.as_ref().unwrap().is_valid_part2())
+        .map(|r| r.is_valid_part2())
         .filter(|&p| p)
         .count();
     println!("Part 2: {}", count2);
