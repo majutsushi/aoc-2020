@@ -96,29 +96,11 @@ impl FromStr for Passport {
     type Err = anyhow::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let (parsed_fields, errors): (Vec<_>, Vec<_>) = s
+        let mut entries = s
             .split_whitespace()
-            .map(|field| {
-                field
-                    .splitn(2, ':')
-                    .map(|p| p.to_owned())
-                    .collect_tuple()
-                    .ok_or(field)
-            })
-            .partition_map(|r| match r {
-                Ok(t) => Either::Left(t),
-                Err(e) => Either::Right(e),
-            });
-
-        if !errors.is_empty() {
-            return Err(anyhow!(
-                "No colon found in fields: {}",
-                errors.into_iter().join(", ")
-            ));
-        }
-
-        let mut entries = parsed_fields
-            .into_iter()
+            .flat_map(|field| field.splitn(2, ':'))
+            .map(|p| p.to_owned())
+            .tuples()
             .collect::<HashMap<String, String>>();
 
         let result = Passport {
