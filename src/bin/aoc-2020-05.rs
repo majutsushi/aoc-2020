@@ -1,7 +1,7 @@
 use std::fs;
 use std::str::FromStr;
 
-use anyhow::{anyhow, Context, Result};
+use anyhow::{Context, Result};
 use itertools::{Either, Itertools};
 
 #[derive(Debug)]
@@ -14,28 +14,33 @@ impl FromStr for Seat {
     type Err = anyhow::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
+        fn lower((min, max): (u8, u8)) -> (u8, u8) {
+            (min, (max + min + 1) / 2 - 1)
+        }
+        fn higher((min, max): (u8, u8)) -> (u8, u8) {
+            ((max + min + 1) / 2, max)
+        }
+
         let (rows, columns) = s.split_at(7);
 
-        let mut row_min = 0;
-        let mut row_max = 127;
-        for c in rows.chars() {
-            match c {
-                'F' => row_max = (row_max + row_min + 1) / 2 - 1,
-                'B' => row_min = (row_max + row_min + 1) / 2,
-                _ => return Err(anyhow!("Invalid row character: {}", c)),
-            }
-        }
+        let (row_min, row_max) = rows
+            .chars()
+            .map(|c| match c {
+                'F' => lower,
+                'B' => higher,
+                _ => panic!("Invalid character: {}", c),
+            })
+            .fold((0, 127), |acc, f| f(acc));
         assert!(row_min == row_max);
 
-        let mut col_min = 0;
-        let mut col_max = 7;
-        for c in columns.chars() {
-            match c {
-                'L' => col_max = (col_max + col_min + 1) / 2 - 1,
-                'R' => col_min = (col_max + col_min + 1) / 2,
-                _ => return Err(anyhow!("Invalid column character: {}", c)),
-            }
-        }
+        let (col_min, col_max) = columns
+            .chars()
+            .map(|c| match c {
+                'L' => lower,
+                'R' => higher,
+                _ => panic!("Invalid character: {}", c),
+            })
+            .fold((0, 7), |acc, f| f(acc));
         assert!(col_min == col_max);
 
         Ok(Seat {
