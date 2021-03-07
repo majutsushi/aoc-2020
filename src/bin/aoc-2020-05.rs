@@ -68,5 +68,12 @@ fn main() -> Result<()> {
     seats.sort_by(|a, b| a.id.cmp(&b.id));
     println!("Part 1: {}", seats.last().unwrap().id);
 
+    for (a, b) in seats.iter().tuple_windows::<(_, _)>() {
+        if b.id != a.id + 1 {
+            println!("Part 2: {}", a.id + 1);
+            break;
+        }
+    }
+
     Ok(())
 }
