@@ -1,5 +1,4 @@
 use std::collections::HashSet;
-use std::fs;
 use std::str::FromStr;
 
 use anyhow::{anyhow, Context, Result};
@@ -36,7 +35,7 @@ impl FromStr for Instruction {
 }
 
 fn main() -> Result<()> {
-    let input = fs::read_to_string("input/08.txt").context("Error reading input file")?;
+    let input = std::fs::read_to_string("input/08.txt").context("Error reading input file")?;
 
     let instructions = input
         .lines()
