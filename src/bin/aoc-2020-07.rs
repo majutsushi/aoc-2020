@@ -4,11 +4,11 @@ use std::fs;
 use anyhow::{anyhow, Context, Result};
 use nom::{
     bytes::complete::tag,
-    character::complete::{alpha1, char, digit1},
+    character::complete::{alpha1, char, digit1, space1},
     combinator::{eof, map_res, opt, recognize},
     error::{convert_error, VerboseError},
     multi::separated_list1,
-    sequence::{separated_pair, terminated},
+    sequence::{separated_pair, terminated, tuple},
     Finish, IResult, Parser,
 };
 
@@ -100,13 +100,13 @@ fn contained_bags(input: &str) -> NomResult<&str, Vec<ContainedBag>> {
 }
 
 fn bag_with_count(input: &str) -> NomResult<&str, ContainedBag> {
-    separated_pair(map_res(digit1, |s: &str| s.parse::<u32>()), char(' '), bag)(input)
+    separated_pair(map_res(digit1, |s: &str| s.parse::<u32>()), space1, bag)(input)
         .map(|(next, (count, colour))| (next, ContainedBag { count, colour }))
 }
 
 fn bag(input: &str) -> NomResult<&str, &str> {
-    let (input, colour) = recognize(separated_pair(alpha1, char(' '), alpha1))(input)?;
-    let (input, _) = tag(" bag")(input)?;
-    let (input, _) = opt(char('s'))(input)?;
-    Ok((input, colour))
+    terminated(
+        recognize(separated_pair(alpha1, space1, alpha1)),
+        tuple((tag(" bag"), opt(char('s')))),
+    )(input)
 }
