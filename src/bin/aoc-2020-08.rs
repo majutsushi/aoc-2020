@@ -2,12 +2,7 @@ use std::collections::HashSet;
 use std::str::FromStr;
 
 use anyhow::{anyhow, Context, Result};
-use lazy_static::lazy_static;
-use regex::Regex;
-
-lazy_static! {
-    static ref INSTRUCTION: Regex = Regex::new(r"^(?P<opcode>\w+) (?P<operand>[+-]\d+)$").unwrap();
-}
+use itertools::Itertools;
 
 #[derive(Debug, Clone)]
 enum Instruction {
@@ -19,12 +14,10 @@ impl FromStr for Instruction {
     type Err = anyhow::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let caps = INSTRUCTION
-            .captures(s)
-            .with_context(|| format!("Failed to match instruction: {}", s))?;
+        let (opcode, operand) = s.splitn(2, ' ').collect_tuple().unwrap();
+        let operand = operand.parse::<i16>()?;
 
-        let operand = caps.name("operand").unwrap().as_str().parse::<i16>()?;
-        let instruction = match caps.name("opcode").unwrap().as_str() {
+        let instruction = match opcode {
             "nop" => Instruction::Nop(operand),
             "acc" => Instruction::Acc(operand),
             "jmp" => Instruction::Jmp(operand),
