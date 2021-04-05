@@ -12,12 +12,9 @@ fn main() -> Result<()> {
         .collect::<Result<Vec<_>>>()?;
 
     for (i, num) in numbers.iter().enumerate().skip(25) {
-        let mut pre = numbers[i - 25..i].to_vec();
-        pre.sort_unstable();
-
         let mut valid = false;
-        'outer: for (j, j_num) in pre[..pre.len() - 1].iter().enumerate() {
-            for k_num in &pre[j + 1..] {
+        'outer: for (j, j_num) in numbers[i - 25..i - 1].iter().enumerate() {
+            for k_num in &numbers[j + 1..i] {
                 if j_num + k_num == *num {
                     valid = true;
                     break 'outer;
