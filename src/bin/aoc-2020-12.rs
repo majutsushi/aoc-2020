@@ -4,19 +4,19 @@ use anyhow::{anyhow, Context, Result};
 
 #[derive(Debug, Clone)]
 enum Instruction {
-    North(i16),
-    South(i16),
-    East(i16),
-    West(i16),
-    Left(i16),
-    Right(i16),
-    Forward(i16),
+    North(i32),
+    South(i32),
+    East(i32),
+    West(i32),
+    Left(i32),
+    Right(i32),
+    Forward(i32),
 }
 impl FromStr for Instruction {
     type Err = anyhow::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let arg = s[1..].parse::<i16>()?;
+        let arg = s[1..].parse::<i32>()?;
         let instruction = match &s[0..1] {
             "N" => Instruction::North(arg),
             "S" => Instruction::South(arg),
@@ -33,8 +33,24 @@ impl FromStr for Instruction {
 
 #[derive(Debug, Clone)]
 struct Position {
-    x: i16,
-    y: i16,
+    x: i32,
+    y: i32,
+}
+impl Position {
+    fn new(x: i32, y: i32) -> Self {
+        Self { x, y }
+    }
+
+    fn rotate(&mut self, degrees: i32) -> Result<()> {
+        *self = match degrees {
+            90 | -270 => Position::new(self.y, -self.x),
+            180 | -180 => Position::new(-self.x, -self.y),
+            270 | -90 => Position::new(-self.y, self.x),
+            _ => return Err(anyhow!("Unsupported rotation degrees: {}", degrees)),
+        };
+
+        Ok(())
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -45,17 +61,20 @@ enum Facing {
     West,
 }
 impl Facing {
-    fn turn(&self, degrees: i16) -> Self {
-        if !matches!(degrees.abs(), 90 | 180 | 270) {
-            panic!("Unsupported turn degrees: {}", degrees)
-        }
-        let v = vec![Self::North, Self::East, Self::South, Self::West];
-        let self_index = v.iter().position(|f| f == self).unwrap();
-        let mut new_index = (self_index as i16 + degrees / 90) % v.len() as i16;
-        if new_index < 0 {
-            new_index += v.len() as i16;
-        }
-        v[new_index as usize]
+    fn turn(&mut self, degrees: i32) -> Result<()> {
+        let degrees = match degrees {
+            -90 => 270,
+            -180 => 180,
+            -270 => 90,
+            d @ (90 | 180 | 270) => d,
+            _ => return Err(anyhow!("Unsupported turn degrees: {}", degrees)),
+        };
+        let facings = vec![Self::North, Self::East, Self::South, Self::West];
+        let self_index = facings.iter().position(|f| f == self).unwrap() as i32;
+        let new_index = (self_index + degrees / 90) % facings.len() as i32;
+
+        *self = facings[new_index as usize];
+        Ok(())
     }
 }
 
@@ -67,16 +86,23 @@ fn main() -> Result<()> {
         .map(|line| line.parse::<Instruction>())
         .collect::<Result<Vec<_>>>()?;
 
-    let mut position = Position { x: 0, y: 0 };
+    println!("Part 1: {}", part1(&instructions)?);
+    println!("Part 2: {}", part2(&instructions)?);
+
+    Ok(())
+}
+
+fn part1(instructions: &[Instruction]) -> Result<i32> {
+    let mut position = Position::new(0, 0);
     let mut facing = Facing::East;
     for instruction in instructions {
-        match instruction {
+        match *instruction {
             Instruction::North(a) => position.y += a,
             Instruction::South(a) => position.y -= a,
             Instruction::East(a) => position.x += a,
             Instruction::West(a) => position.x -= a,
-            Instruction::Left(a) => facing = facing.turn(-a),
-            Instruction::Right(a) => facing = facing.turn(a),
+            Instruction::Left(a) => facing.turn(-a)?,
+            Instruction::Right(a) => facing.turn(a)?,
             Instruction::Forward(a) => match facing {
                 Facing::North => position.y += a,
                 Facing::South => position.y -= a,
@@ -86,7 +112,27 @@ fn main() -> Result<()> {
         }
     }
 
-    println!("{}", position.x.abs() + position.y.abs());
+    Ok(position.x.abs() + position.y.abs())
+}
 
-    Ok(())
+fn part2(instructions: &[Instruction]) -> Result<i32> {
+    let mut ship = Position::new(0, 0);
+    let mut waypoint = Position::new(10, 1);
+
+    for instruction in instructions {
+        match *instruction {
+            Instruction::North(a) => waypoint.y += a,
+            Instruction::South(a) => waypoint.y -= a,
+            Instruction::East(a) => waypoint.x += a,
+            Instruction::West(a) => waypoint.x -= a,
+            Instruction::Left(a) => waypoint.rotate(-a)?,
+            Instruction::Right(a) => waypoint.rotate(a)?,
+            Instruction::Forward(a) => {
+                ship.y += a * waypoint.y;
+                ship.x += a * waypoint.x;
+            }
+        }
+    }
+
+    Ok(ship.x.abs() + ship.y.abs())
 }
